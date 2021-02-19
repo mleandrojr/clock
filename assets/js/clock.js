@@ -84,7 +84,6 @@ class Clock {
 
         let target = e.currentTarget;
         this.smoothPointers = target.checked;
-        this.update();
     }
 
     /**
@@ -196,7 +195,7 @@ class Clock {
 
         let colon = document.getElementsByClassName("clock__digital-colon");
         for (let i = 0, length = colon.length; i < length; i++) {
-            colon[i].style.opacity = (time.seconds + 1) % 2;
+            colon[i].style.opacity = Math.abs(parseInt(colon[i].style.opacity || 0) - 1);
         }
     }
 
