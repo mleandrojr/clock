@@ -38,16 +38,15 @@
             <div class="clock__marker clock__marker-270"></div>
             <div class="clock__marker clock__marker-300"></div>
             <div class="clock__marker clock__marker-330"></div>
+            <div class="clock__pointer clock__pointer-alarm no-transition"></div>
             <div class="clock__pointer clock__pointer-hours"></div>
             <div class="clock__pointer clock__pointer-minutes"></div>
             <div class="clock__pointer clock__pointer-seconds"></div>
             <div class="clock__glass"></div>
         </div>
-        <div class="toggles">
-            <input type="checkbox" name="smoothPointersToggle" id="smoothPointersToggle" class="toggle__checkbox" checked>
-            <label for="smoothPointersToggle" class="toggle__label" data-off="Movimento brusco dos ponteiros" data-on="Movimento suave dos ponteiros"></label>
-            </div>
-        </div>
+        <audio class="clock__alarm-sound">
+            <source src="./assets/audio/alarm01.mp3">
+        </audio>
         <script type="text/javascript" src="./assets/js/clock.js"></script>
     </body>
 </html>

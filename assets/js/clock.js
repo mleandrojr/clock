@@ -6,7 +6,7 @@ class Clock {
      * @author Marcos Leandro
      * @since  2020-02-18
      *
-     * @param {Bool}
+     * @param  {Bool}
      */
     smoothPointers = true;
 
@@ -16,9 +16,48 @@ class Clock {
      * @author Marcos Leandro
      * @since  2021-02-18
      *
-     * @param {Object}
+     * @param  {Object}
      */
     currentDegrees = {};
+
+    /**
+     * Stores the digital display status.
+     *
+     * @author Marcos Leandro
+     * @since  2021-02-20
+     */
+    displayActive = true;
+
+    /**
+     * Alarm pointer degrees.
+     *
+     * @author Marcos Leandro
+     * @since  2021-02-20
+     *
+     * @param  {Number}
+     */
+    alarmDegrees = 0;
+
+    /**
+     * Stores the alarm status.
+     *
+     * @author Marcos Leandro
+     * @since  2021-02-20
+     *
+     * @param  {Bool}
+     */
+    alarmActive = false;
+
+    /**
+     * Stores whether the clock is in
+     * half step or not.
+     * It's important to control colons
+     * status.
+     *
+     * @author Marcos Leandro
+     * @since  2021-02-20
+     */
+    halfstep = false;
 
     /**
      * Clock updating interval.
@@ -31,59 +70,22 @@ class Clock {
     interval;
 
     /**
+     * Display updating interval.
+     *
+     * @author Marcos Leandro
+     * @since  2021-02-20
+     */
+    displayInterval;
+
+    /**
      * Object constructor.
      *
      * @author Marcos Leandro
      * @since  2021-02-18
      */
     constructor() {
-
-        /*
-         * Adds the listeners to the checkbox
-         * that will control the pointers behavior.
-         */
-        this.addPointersToggleListeners();
-
-        /**
-         * Defines the clock updating interval.
-         *
-         * We need to use arrow functions here
-         * because the simple method call causes
-         * loss of (this) context.
-         *
-         * We're updating the clock every 500 milisseconds (half second)
-         * because the pointers behavior changing effect freezes the clock
-         * for a bit.
-         */
+        this.addScrollListeners();
         this.interval = setInterval(() => { this.update() }, 500);
-    }
-
-    /**
-     * Toggles the smooth pointers.
-     *
-     * @author Marcos Leandro
-     * @since  2021-02-18
-     */
-    toggleSmoothPointers() {
-        this.smoothPointers = !this.smoothPointers;
-    }
-
-    /**
-     * Updates the pointers behavior.
-     * We need to use an arrow funcion here
-     * because we need to keep the context.
-     *
-     * @author Marcos Leandro
-     * @since  2021-02-19
-     *
-     * @param {Event} e
-     */
-    updatePointersBehavior = (e) => {
-
-        e.preventDefault();
-
-        let target = e.currentTarget;
-        this.smoothPointers = target.checked;
     }
 
     /**
@@ -100,7 +102,44 @@ class Clock {
         this.updatePointer(".clock__pointer-seconds", degrees.seconds);
         this.updatePointer(".clock__pointer-minutes", degrees.minutes);
         this.updatePointer(".clock__pointer-hours", degrees.hours);
-        this.updateDigitalClock(time);
+        this.alarm(degrees);
+
+        if (this.displayActive) {
+            this.updateDigitalClock(time);
+        }
+    }
+
+    /**
+     * Evaluates the alarm.
+     *
+     * @author Marcos Leandro
+     * @since  2021-02-20
+     *
+     * @param {Object} degrees
+     */
+    alarm(degrees) {
+
+        if (!this.alarmActive) {
+            return;
+        }
+
+        /*
+         * Verifies if it's time to play the alarm.
+         */
+        let start = this.alarmDegrees;
+        let end   = this.alarmDegrees + .25;
+
+        if (degrees.hours >= start && degrees.hours <= end) {
+            this.playAlarm();
+            return;
+        }
+
+        /*
+         * Plays a beep on each hour.
+         */
+        if (degrees.minutes == 0 && degrees.seconds == 0) {
+            this.playAlarm();
+        }
     }
 
     /**
@@ -136,6 +175,7 @@ class Clock {
          * spinning pointer caused by the condition above. p=
          */
         if (degrees == this.currentDegrees[selector]) {
+            this.halfStep = true;
             return;
         }
 
@@ -158,6 +198,7 @@ class Clock {
          * We save the current pointer degree here.
          */
         this.currentDegrees[selector] = degrees;
+        this.halfStep = false;
 
         /*
          * Here we fix the pointer position to 360 to 0 degrees.
@@ -189,13 +230,18 @@ class Clock {
      */
     updateDigitalClock(time) {
 
-        document.querySelector(".clock__digital-hours").innerHTML   = time.hours.toString().padStart(2, "0");
-        document.querySelector(".clock__digital-minutes").innerHTML = time.minutes.toString().padStart(2, "0");
-        document.querySelector(".clock__digital-seconds").innerHTML = time.seconds.toString().padStart(2, "0");
+        let hours   = time.hours.toString().padStart(2, "0");
+        let minutes = time.minutes.toString().padStart(2, "0");
+        let seconds = time.seconds.toString().padStart(2, "0");
+
+        document.querySelector(".clock__digital-hours").innerHTML   = hours;
+        document.querySelector(".clock__digital-minutes").innerHTML = minutes;
+        document.querySelector(".clock__digital-seconds").innerHTML = seconds;
 
         let colon = document.getElementsByClassName("clock__digital-colon");
+
         for (let i = 0, length = colon.length; i < length; i++) {
-            colon[i].style.opacity = Math.abs(parseInt(colon[i].style.opacity || 0) - 1);
+            colon[i].style.opacity = this.displayActive && this.halfStep ? 0 : 1;
         }
     }
 
@@ -245,16 +291,80 @@ class Clock {
     }
 
     /**
-     * Adds the pointers behavior checkbox listeners.
+     * Adjusts the alarm.
      *
      * @author Marcos Leandro
-     * @since  2021-02-19
+     * @since  2021-02-20
+     *
+     * @param {Event} e
      */
-    addPointersToggleListeners() {
-        let element = document.getElementById("smoothPointersToggle");
-        if (element) {
-            element.addEventListener("change", this.updatePointersBehavior);
+    adjustAlarm = (e) => {
+
+        this.alarmDegrees += e.deltaY > 0 ? .5 : -.5;
+
+        /*
+         * We don't want a negative value because
+         * the time is ALWAYS positive, so we
+         * calculate the difference.
+         */
+        if (this.alarmDegrees < 0) {
+            this.alarmDegrees = 360 - this.alarmDegrees;
         }
+
+        let degrees = this.alarmDegrees % 360;
+        let pointer = document.querySelector(".clock__pointer-alarm");
+
+        if (!pointer) {
+            return;
+        }
+
+        pointer.style.transform = "translate(-50%, 0) rotate(" + degrees + "deg)";
+        this.alarmActive   = true;
+        this.displayActive = false;
+
+        clearTimeout(this.displayInterval);
+        this.displayInterval = setTimeout(() => {
+            this.displayActive = true;
+        }, 2000);
+
+
+        let minutes = this.alarmDegrees * 2 % 60;
+        let hours   = this.alarmDegrees * 2 / 60;
+
+        this.updateDigitalClock({
+            "hours"   : Math.floor(hours),
+            "minutes" : Math.floor(minutes),
+            "seconds" : 0
+        })
+    }
+
+    /**
+     * Plays the alarm.
+     *
+     * @author Marcos Leandro
+     * @since  2021-02-20
+     */
+    playAlarm() {
+
+        try {
+
+            document.querySelector(".clock__alarm-sound")
+                .play()
+                .catch(function(err) {});
+
+        } catch (err) {
+            document.querySelector(".clock__alarm-sound").play();
+        }
+    }
+
+    /**
+     * Adds the scroll listeners.
+     *
+     * @author Marcos Leandro
+     * @since  2021-02-20
+     */
+    addScrollListeners() {
+        document.addEventListener("wheel", this.adjustAlarm);
     }
 };
 
