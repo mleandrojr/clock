@@ -26,6 +26,24 @@ html, body {
     box-shadow: #111111 3px 3px 5px inset;
 }
 
+.clock__button-alarm {
+    position: absolute;
+    cursor: pointer;
+    top: 6vh;
+    width: 7vh;
+    height: 10vh;
+    background: #333333;
+    left: 50%;
+    border-radius: 1vh;
+    box-shadow: 2px 0px 5px rgba(255, 255, 255, .3) inset;
+    transition: top .1s linear;
+    transform: translate(-50%, 0);
+}
+
+.clock__button-alarm:active {
+    top: 7vh;
+}
+
 .clock__text-quartz {
     top: 30%;
     left: 50%;
@@ -206,10 +224,6 @@ html, body {
         rgba(255, 255, 255, 0) 80%,
         rgba(255, 255, 255, .05) 83%
     );
-}
-
-.mirror {
-    transform: scale(-1, 1);
 }
 
 .no-transition {

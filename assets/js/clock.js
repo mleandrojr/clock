@@ -85,6 +85,7 @@ class Clock {
      */
     constructor() {
         this.addScrollListeners();
+        this.addAlarmButtonListeners();
         this.interval = setInterval(() => { this.update() }, 500);
     }
 
@@ -105,7 +106,7 @@ class Clock {
         this.alarm(degrees);
 
         if (this.displayActive) {
-            this.updateDigitalClock(time);
+            this.updateDigitalClock(time, !this.halfStep);
         }
     }
 
@@ -119,17 +120,13 @@ class Clock {
      */
     alarm(degrees) {
 
-        if (!this.alarmActive) {
-            return;
-        }
-
         /*
          * Verifies if it's time to play the alarm.
          */
         let start = this.alarmDegrees;
         let end   = this.alarmDegrees + .25;
 
-        if (degrees.hours >= start && degrees.hours <= end) {
+        if (this.alarmActive && (degrees.hours >= start && degrees.hours <= end)) {
             this.playAlarm();
             return;
         }
@@ -228,7 +225,7 @@ class Clock {
      *
      * @param {Object} time
      */
-    updateDigitalClock(time) {
+    updateDigitalClock(time, colonStatus) {
 
         let hours   = time.hours.toString().padStart(2, "0");
         let minutes = time.minutes.toString().padStart(2, "0");
@@ -241,8 +238,40 @@ class Clock {
         let colon = document.getElementsByClassName("clock__digital-colon");
 
         for (let i = 0, length = colon.length; i < length; i++) {
-            colon[i].style.opacity = this.displayActive && this.halfStep ? 0 : 1;
+            colon[i].style.opacity = colonStatus ? 1 : 0;
         }
+    }
+
+    /**
+     * Writes a message on display.
+     *
+     * @author Marcos Leandro
+     * @since  2021-02-22
+     *
+     * @param {String} message
+     * @param {Bool}   colonStatus
+     */
+    displayWrite(message, colonStatus) {
+
+        if (message.length > 6) {
+            throw "Message overflow.";
+        }
+
+        this.displayActive = false;
+
+        let object = {
+            hours: message.substring(0, 2).replace(/\s/g, "&nbsp;"),
+            minutes: message.substring(2, 4).replace(/\s/g, "&nbsp;"),
+            seconds: message.substring(4, 6).replace(/\s/g, "&nbsp;")
+        }
+
+        clearTimeout(this.displayInterval);
+
+        this.displayInterval = setTimeout(() => {
+            this.displayActive = true;
+        }, 2000);
+
+        this.updateDigitalClock(object, colonStatus);
     }
 
     /**
@@ -319,23 +348,16 @@ class Clock {
         }
 
         pointer.style.transform = "translate(-50%, 0) rotate(" + degrees + "deg)";
-        this.alarmActive   = true;
-        this.displayActive = false;
-
-        clearTimeout(this.displayInterval);
-        this.displayInterval = setTimeout(() => {
-            this.displayActive = true;
-        }, 2000);
-
 
         let minutes = this.alarmDegrees * 2 % 60;
         let hours   = this.alarmDegrees * 2 / 60;
 
-        this.updateDigitalClock({
-            "hours"   : Math.floor(hours),
-            "minutes" : Math.floor(minutes),
-            "seconds" : 0
-        })
+        let message =
+            Math.floor(hours).toString().padStart(2, "0") +
+            Math.floor(minutes).toString().padStart(2, "0") +
+            "00";
+
+        this.displayWrite(message, true);
     }
 
     /**
@@ -358,6 +380,26 @@ class Clock {
     }
 
     /**
+     * Toggles the alarm.
+     *
+     * @author Marcos Leandro
+     * @since  2021-02-22
+     */
+    toggleAlarm = (e) => {
+
+        e.preventDefault();
+
+        this.alarmActive = !this.alarmActive;
+
+        if (this.alarmActive) {
+            this.displayWrite("AL  ON", false);
+            return;
+        }
+
+        this.displayWrite("AL OFF", false);
+    }
+
+    /**
      * Adds the scroll listeners.
      *
      * @author Marcos Leandro
@@ -365,6 +407,19 @@ class Clock {
      */
     addScrollListeners() {
         document.addEventListener("wheel", this.adjustAlarm);
+    }
+
+    /**
+     * Adds the alarm button listeners.
+     *
+     * @author Marcos Leandro
+     * @since  2021-02-22
+     */
+    addAlarmButtonListeners() {
+        let buttons = document.getElementsByClassName("clock__button-alarm");
+        for (let i = 0, length = buttons.length; i < length; i++) {
+            buttons[i].addEventListener("mousedown", this.toggleAlarm);
+        }
     }
 };
 
