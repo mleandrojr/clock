@@ -90,7 +90,6 @@ html, body {
 
 .clock__digital-ghost {
     position: absolute;
-    margin-top: 4px;
     opacity: .1;
 }
 

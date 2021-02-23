@@ -327,7 +327,7 @@ class Clock {
      *
      * @param {Event} e
      */
-    adjustAlarm = (e) => {
+    adjustAlarm(e) {
 
         this.alarmDegrees += e.deltaY > 0 ? .5 : -.5;
 
@@ -389,7 +389,7 @@ class Clock {
      * @author Marcos Leandro
      * @since  2021-02-22
      */
-    toggleAlarm = (e) => {
+    toggleAlarm(e) {
 
         e.preventDefault();
 
@@ -410,7 +410,7 @@ class Clock {
      * @since  2021-02-20
      */
     addScrollListeners() {
-        document.addEventListener("wheel", this.adjustAlarm);
+        document.addEventListener("wheel", (e) => { this.adjustAlarm(e) });
     }
 
     /**
@@ -422,7 +422,7 @@ class Clock {
     addAlarmButtonListeners() {
         let buttons = document.getElementsByClassName("clock__button-alarm");
         for (let i = 0, length = buttons.length; i < length; i++) {
-            buttons[i].addEventListener("mousedown", this.toggleAlarm);
+            buttons[i].addEventListener("mousedown", (e) => { this.toggleAlarm(e) });
         }
     }
 };
