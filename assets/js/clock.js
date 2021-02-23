@@ -350,7 +350,11 @@ class Clock {
         pointer.style.transform = "translate(-50%, 0) rotate(" + degrees + "deg)";
 
         let minutes = this.alarmDegrees * 2 % 60;
-        let hours   = this.alarmDegrees * 2 / 60;
+        let hours   = (this.alarmDegrees * 2 / 60) % 12;
+
+        if (hours < 1) {
+            hours = 12;
+        }
 
         let message =
             Math.floor(hours).toString().padStart(2, "0") +
